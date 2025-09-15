@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <title>My Movie Pool</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'movies/style.css' %}">
   </head>
   <body>
     <h1>My Full Movie Pool</h1>
@@ -55,6 +57,6 @@
 
     <br />
     <a href="{% url 'home' %}">Back to Home</a> |
-    <a href="{% url 'bulk_upload' %}">Bulk Upload Movies</a>
+    <a href="{% url 'add_movies' %}">Add Movies</a>
   </body>
 </html>

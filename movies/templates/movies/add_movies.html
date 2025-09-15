@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Movies</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'movies/style.css' %}">
+</head>
+<body>
+    <h1>Add Movies</h1>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Add a Single Movie</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ single_movie_form.as_p }}
+        <button type="submit" name="add_single_movie">Add Movie</button>
+    </form>
+
+    <hr>
+
+    <h2>Bulk Upload Movies (CSV)</h2>
+    <p>Please upload a CSV file with the following columns: <b>title</b>, <b>release_year</b>, <b>genre</b>.</p>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ upload_form.as_p }}
+        <button type="submit" name="upload_csv">Upload</button>
+    </form>
+
+    <br>
+    <a href="{% url 'home' %}">Back to Home</a> | <a href="{% url 'movie_pool' %}">View All Movies in My Pool</a>
+</body>
+</html>
