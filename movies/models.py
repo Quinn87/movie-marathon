@@ -11,10 +11,7 @@ class Movie(models.Model):
     notes = models.TextField(null=True, blank=True)
 
     def get_last_watched_year(self):
-        """
-        Returns the year the movie was last watched, or None if never watched.
-        """
-        last_watched = self.schedule_set.order_by('-date').first()
+        last_watched = self.schedule_set.filter(watched_year__isnull=False).order_by('-watched_year').first()
         if last_watched:
             return last_watched.date.year
         return None
@@ -25,6 +22,7 @@ class Movie(models.Model):
 class Schedule(models.Model):
     date = models.DateField(unique=True)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    watched_year = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.date} - {self.movie.title}"

@@ -1,6 +1,9 @@
 import csv
 import io
-from django.shortcuts import render, redirect
+import random
+from datetime import date, timedelta
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
 from django.contrib import messages #Used for displaying success/error messages
 from .models import Movie, Schedule
 from .forms import MovieUploadForm, MovieForm
@@ -72,3 +75,68 @@ def add_movies(request):
 def movie_pool(request):
     movie_list = Movie.objects.all().order_by('title')
     return render(request, 'movies/movie_pool.html', {'movie_list': movie_list})
+
+def generate_schedule(request):
+    if request.method == 'POST':
+        selected_movie_ids = request.POST.getlist('movies')
+
+        if not selected_movie_ids:
+            messages.error(request, "Please select at lease one movie to schedule.")
+            return redirect('movie_pool')
+        
+        #Get the movies from the database
+        movies_to_schedule = list(Movie.objects.filter(id__in=selected_movie_ids))
+
+        #Shuffle the list randomly
+        random.shuffle(movies_to_schedule)
+
+        #Get the current year and the start of October
+        current_year = date.today().year
+        october_start = date(current_year, 10, 1)
+
+        #Clear any existing schedule for current year's October
+        Schedule.objects.filter(date__year=current_year, date__month=10).delete()
+
+        #Create a new schedule
+        for i, movie in enumerate(movies_to_schedule):
+            #If the number of selected movies exceeds the days in October, stop
+            if i>=31:
+                break
+
+            schedule_date = october_start + timedelta(days=i)
+
+            #Create the schedule entry
+            Schedule.objects.create(
+                movie=movie,
+                date=schedule_date
+            )
+
+        messages.success(request, "Your October schedulke has been successfully generated!")
+        return redirect('home')
+    
+    #if the user tries to access this page with a GET request, redirect them
+    return redirect('movie_pool')
+
+@require_POST
+def mark_watched(request):
+    schedule_id = request.POST.get('schedule_id')
+    is_watched = request.POST.get('watched')
+
+    schedule_entry = get_object_or_404(Schedule, id=schedule_id)
+    
+    if is_watched:
+        schedule_entry.watched_year = date.today().year
+        schedule_entry.save()
+        
+        # Update the is_watched status on the related Movie object
+        schedule_entry.movie.is_watched = True
+        schedule_entry.movie.save()
+    else:
+        schedule_entry.watched_year = None
+        schedule_entry.save()
+        
+        # Update the is_watched status on the related Movie object
+        schedule_entry.movie.is_watched = False
+        schedule_entry.movie.save()
+        
+    return redirect('home')

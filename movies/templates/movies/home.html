@@ -1,23 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8">
     <title>October Movie Marathon</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'movies/style.css' %}">
-  </head>
-  <body>
-    <h1>October Movie Marathon 2025 Schedule</h1>
-
+</head>
+<body>
+    <h1>October Movie Marathon {{ october_schedule.first.date.year }} Schedule</h1>
+    
     <h2>The October Schedule</h2>
     <ul>
-      {% for entry in october_schedule %}
-      <li>{{ entry.date|date:"F j" }}: {{ entry.movie.title }}</li>
-      {% endfor %}
+        {% for entry in october_schedule %}
+            <li>
+                <form method="post" action="{% url 'mark_watched' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="schedule_id" value="{{ entry.id }}">
+                    <input type="checkbox" name="watched" {% if entry.watched_year %}checked{% endif %} onchange="this.form.submit()">
+                    {{ entry.date|date:"F j" }}: {{ entry.movie.title }}
+                </form>
+            </li>
+        {% endfor %}
     </ul>
 
-    <br />
-    <a href="{% url 'movie_pool' %}">View All Movies in My Pool</a> |
-    <a href="{% url 'add_movies' %}">Add Movies</a>
-  </body>
+    <br>
+    <a href="{% url 'movie_pool' %}">View All Movies in My Pool</a> | <a href="{% url 'add_movies' %}">Add Movies</a>
+</body>
 </html>

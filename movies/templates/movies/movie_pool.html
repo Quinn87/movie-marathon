@@ -1,62 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8">
     <title>My Movie Pool</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'movies/style.css' %}">
-  </head>
-  <body>
+</head>
+<body>
     <h1>My Full Movie Pool</h1>
-    <table>
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>Year</th>
-          <th>Genre</th>
-          <th>Rating</th>
-          <th>Watched</th>
-          <th>Available</th>
-        </tr>
-      </thead>
-    <tbody>
-        {% for movie in movie_list %}
-            <tr>
-                <td>{{ movie.title }}</td>
-                <td>{{ movie.release_year }}</td>
-                <td>{{ movie.genre }}</td>
-                <td>
-                    {% if movie.rating %}
-                        {{ movie.rating }}
-                    {% else %}
-                        Not Rated
-                    {% endif %}
-                </td>
-                <td>
-                    {% if movie.is_watched %}
-                        {% if movie.get_last_watched_year %}
-                            Yes ({{ movie.get_last_watched_year }})
-                        {% else %}
-                            Yes
-                        {% endif %}
-                    {% else %}
-                        No
-                    {% endif %}
-                </td>
-                <td>
-                    {% if movie.is_available %}
-                        Yes
-                    {% else %}
-                        No
-                    {% endif %}
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-    </table>
 
-    <br />
-    <a href="{% url 'home' %}">Back to Home</a> |
-    <a href="{% url 'add_movies' %}">Add Movies</a>
-  </body>
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" action="{% url 'generate_schedule' %}">
+        {% csrf_token %}
+        <button type="submit">Generate October Schedule</button>
+        <br><br>
+        <table>
+            <thead>
+                <tr>
+                    <th></th> <th>Title</th>
+                    <th>Year</th>
+                    <th>Genre</th>
+                    <th>Rating</th>
+                    <th>Watched</th>
+                    <th>Available</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movie in movie_list %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="movies" value="{{ movie.id }}">
+                        </td>
+                        <td>{{ movie.title }}</td>
+                        <td>{{ movie.release_year }}</td>
+                        <td>{{ movie.genre }}</td>
+                        <td>
+                            {% if movie.rating %}
+                                {{ movie.rating }}
+                            {% else %}
+                                Not Rated
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if movie.is_watched %}
+                                {% if movie.get_last_watched_year %}
+                                    Yes ({{ movie.get_last_watched_year }})
+                                {% else %}
+                                    Yes
+                                {% endif %}
+                            {% else %}
+                                No
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if movie.is_available %}
+                                Yes
+                            {% else %}
+                                No
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+
+    <br>
+    <a href="{% url 'home' %}">Back to Home</a> | <a href="{% url 'add_movies' %}">Add Movies</a>
+</body>
 </html>
