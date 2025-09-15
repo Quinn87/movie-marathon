@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>My Movie Pool</title>
+  </head>
+  <body>
+    <h1>My Full Movie Pool</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Year</th>
+          <th>Genre</th>
+          <th>Rating</th>
+          <th>Watched</th>
+          <th>Available</th>
+        </tr>
+      </thead>
+    <tbody>
+        {% for movie in movie_list %}
+            <tr>
+                <td>{{ movie.title }}</td>
+                <td>{{ movie.release_year }}</td>
+                <td>{{ movie.genre }}</td>
+                <td>
+                    {% if movie.rating %}
+                        {{ movie.rating }}
+                    {% else %}
+                        Not Rated
+                    {% endif %}
+                </td>
+                <td>
+                    {% if movie.is_watched %}
+                        {% if movie.get_last_watched_year %}
+                            Yes ({{ movie.get_last_watched_year }})
+                        {% else %}
+                            Yes
+                        {% endif %}
+                    {% else %}
+                        No
+                    {% endif %}
+                </td>
+                <td>
+                    {% if movie.is_available %}
+                        Yes
+                    {% else %}
+                        No
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+    <br />
+    <a href="{% url 'home' %}">Back to Home</a> |
+    <a href="{% url 'bulk_upload' %}">Bulk Upload Movies</a>
+  </body>
+</html>

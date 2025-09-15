@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>October Movie Marathon</title>
+  </head>
+  <body>
+    <h1>October Movie Marathon 2025 Schedule</h1>
+
+    <h2>The October Schedule</h2>
+    <ul>
+      {% for entry in october_schedule %}
+      <li>{{ entry.date|date:"F j" }}: {{ entry.movie.title }}</li>
+      {% endfor %}
+    </ul>
+
+    <br />
+    <a href="{% url 'movie_pool' %}">View All Movies in My Pool</a> |
+    <a href="{% url 'bulk_upload' %}">Bulk Upload Movies</a>
+  </body>
+</html>
