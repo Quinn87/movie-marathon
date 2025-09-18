@@ -5,9 +5,16 @@
     <title>My Movie Pool</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'movies/style.css' %}">
+    <script src="{% static 'movies/schedule_selection.js' %}"></script>
 </head>
 <body>
     <h1>My Full Movie Pool</h1>
+
+    <form method="get" action="{% url 'movie_pool' %}">
+        <input type="text" name="q" placeholder="Search movies...">
+        <button type="submit">Search</button>
+    </form>
+    <br>
 
     {% if messages %}
         <ul class="messages">
@@ -24,7 +31,8 @@
         <table>
             <thead>
                 <tr>
-                    <th></th> <th>Title</th>
+                    <th></th>
+                    <th>Title</th>
                     <th>Year</th>
                     <th>Genre</th>
                     <th>Rating</th>

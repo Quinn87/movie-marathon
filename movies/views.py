@@ -1,6 +1,7 @@
 import csv
 import io
 import random
+import json
 from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
@@ -23,31 +24,30 @@ def home(request):
     return render(request, 'movies/home.html', context)
 
 def add_movies(request):
+    upload_form = MovieUploadForm()  # Initialize forms for both GET and POST
+    single_movie_form = MovieForm()
+    
     if request.method == 'POST':
-        #Check if the single movie form was submitted
+        # Check if the single movie form was submitted
         if 'add_single_movie' in request.POST:
             single_movie_form = MovieForm(request.POST)
             if single_movie_form.is_valid():
                 single_movie_form.save()
                 messages.success(request, f"Successfully added {single_movie_form.cleaned_data['title']}!")
-                return redirect('add_movies') #Redirect to the same page to show the success message
-
-        #Check if the bulk upload form was submitted    
+                return redirect('add_movies')
+        
+        # Check if the bulk upload form was submitted
         elif 'upload_csv' in request.POST:
             upload_form = MovieUploadForm(request.POST, request.FILES)
             if upload_form.is_valid():
                 csv_file = request.FILES['movie_list_csv']
-                #Decode the uploaded file from bytes to a string
                 file_data = csv_file.read().decode("utf-8")
-                #Create an in-memory file object
                 io_string = io.StringIO(file_data)
-                #Use csv.render to parse the data
                 reader = csv.reader(io_string)
                 next(reader)
-
+                
                 movies_to_create = []
                 for row in reader:
-                    #Assuming CSV columns are: title, release_year, genre
                     title, release_year, genre = row
                     movies_to_create.append(
                         Movie(
@@ -56,65 +56,84 @@ def add_movies(request):
                             genre=genre.strip()
                         )
                     )
-
-                #Bulk create movies for efficiency
+                
                 Movie.objects.bulk_create(movies_to_create)
                 messages.success(request, f"Successfully uploaded {len(movies_to_create)} movies!")
-                return redirect('home') #redirect to home page after upload
-    else:
-        #If it's a GET request, create an empty form
-        single_movie_form = MovieForm()
-        upload_form = MovieUploadForm()
-        
+                return redirect('add_movies')
+    
     context = {
         'single_movie_form': single_movie_form,
         'upload_form': upload_form,
     }
-    return render(request, 'movies/bulk_upload.html', {'form': form})
+    return render(request, 'movies/add_movies.html', context)
 
 def movie_pool(request):
-    movie_list = Movie.objects.all().order_by('title')
-    return render(request, 'movies/movie_pool.html', {'movie_list': movie_list})
+    query = request.GET.get('q')
+    if query:
+        # Filter movies by title, genre, or release year (using __icontains for case-insensitive search)
+        movie_list = Movie.objects.filter(
+            title__icontains=query
+        ).order_by('title')
+        if not movie_list:
+            # If no titles match, try searching other fields
+            movie_list = Movie.objects.filter(
+                genre__icontains=query
+            ).order_by('title')
+        if not movie_list and query.isdigit():
+            # If still no matches, try searching by release year
+            movie_list = Movie.objects.filter(
+                release_year=int(query)
+            ).order_by('title')
+    else:
+        # If no query is provided, show all movies
+        movie_list = Movie.objects.all().order_by('title')
+
+    context = {
+        'movie_list': movie_list,
+    }
+    return render(request, 'movies/movie_pool.html', context)
 
 def generate_schedule(request):
     if request.method == 'POST':
-        selected_movie_ids = request.POST.getlist('movies')
+        # Get the JSON string from the hidden input field
+        selected_movies_json = request.POST.get('movies', '[]')
+        
+        # Parse the JSON string into a Python list
+        try:
+            selected_movie_ids = json.loads(selected_movies_json)
+        except json.JSONDecodeError:
+            messages.error(request, "Invalid movie selection data.")
+            return redirect('movie_pool')
 
         if not selected_movie_ids:
-            messages.error(request, "Please select at lease one movie to schedule.")
+            messages.error(request, "Please select at least one movie to schedule.")
             return redirect('movie_pool')
-        
-        #Get the movies from the database
+
+        # Get the movies from the database
         movies_to_schedule = list(Movie.objects.filter(id__in=selected_movie_ids))
 
-        #Shuffle the list randomly
+        # ... rest of the code is the same ...
         random.shuffle(movies_to_schedule)
-
-        #Get the current year and the start of October
+        
         current_year = date.today().year
         october_start = date(current_year, 10, 1)
 
-        #Clear any existing schedule for current year's October
         Schedule.objects.filter(date__year=current_year, date__month=10).delete()
-
-        #Create a new schedule
+        
         for i, movie in enumerate(movies_to_schedule):
-            #If the number of selected movies exceeds the days in October, stop
-            if i>=31:
+            if i >= 31:
                 break
-
+                
             schedule_date = october_start + timedelta(days=i)
-
-            #Create the schedule entry
+            
             Schedule.objects.create(
                 movie=movie,
                 date=schedule_date
             )
-
-        messages.success(request, "Your October schedulke has been successfully generated!")
+        
+        messages.success(request, "Your October schedule has been successfully generated!")
         return redirect('home')
-    
-    #if the user tries to access this page with a GET request, redirect them
+
     return redirect('movie_pool')
 
 @require_POST

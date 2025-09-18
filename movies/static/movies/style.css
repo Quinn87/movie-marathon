@@ -77,3 +77,17 @@ li {
   text-decoration: line-through;
   color: #888;
 }
+/* Search Form */
+form[method="get"] input[type="text"] {
+    padding: 8px;
+    border: 1px solid #333;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border-radius: 5px;
+    width: 250px;
+}
+
+form[method="get"] button {
+    padding: 8px 15px;
+    margin-left: 5px;
+}
